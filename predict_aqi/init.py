@@ -11,7 +11,7 @@ model  = load_model('aqi_lstm_model.h5')
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
     """
-    Expects a JSON body with key "data" = list of 12 [CO, PM2.5, AQI] triples.
+    Expects a JSON body with key "data" = list of 6 [CO, PM2.5, AQI] triples.
     Returns JSON {"forecast": [AQI_t+1, ..., AQI_t+4]}
     """
     logging.info('predict_aqi function processed a request.')
@@ -19,7 +19,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     try:
         body = req.get_json()
         data = np.array(body['data'], dtype=float)
-        if data.shape != (12, 3):
+        if data.shape != (6, 3):
             raise ValueError(f'Expected shape (12,3), got {data.shape}')
     except Exception as e:
         return func.HttpResponse(
@@ -28,8 +28,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         )
 
     # Scale & reshape
-    scaled = scaler.transform(data)              # (12,3)
-    X_new  = np.expand_dims(scaled, axis=0)      # (1,12,3)
+    scaled = scaler.transform(data)              # (6,3)
+    X_new  = np.expand_dims(scaled, axis=0)      # (1,6,3)
 
     # Predict next 4 AQI steps
     y_scaled = model.predict(X_new).flatten()    # (4,)
